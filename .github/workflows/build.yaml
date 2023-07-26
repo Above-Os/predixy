@@ -16,7 +16,7 @@ jobs:
     - name: Setup Cpp
       uses: aminya/setup-cpp@v1
       with:
-        compiler: gcc
+        compiler: gcc-9
         cppcheck: true
     
     - run: make debug
