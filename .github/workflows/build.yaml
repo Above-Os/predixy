@@ -13,10 +13,5 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup Cpp
-      uses: aminya/setup-cpp@v1
-      with:
-        compiler: gcc-9
-        cppcheck: true
-    
-    - run: make debug
+    - name: Build Docker image
+      run: docker build -t predixy .
