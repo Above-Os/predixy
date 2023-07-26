@@ -47,9 +47,9 @@ else
 $(error Unknown event:$(EV))
 endif
 
-CFLAGS = -std=c++11 -Wall -w $(Opts)
+CFLAGS = -std=c++11 -Wall -w $(Opts) -D_GNU_SOURCE=0
 INCFLAGS =
-LDFLAGS += $(LDLIBCPP) -rdynamic -lpthread
+LDFLAGS += $(LDLIBCPP) -rdynamic -lpthread -lexecinfo -static
 
 
 target = predixy
