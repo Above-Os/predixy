@@ -40,6 +40,7 @@ Auth::Auth(const AuthConf& conf):
     }
 
     if (!conf.namePrefix.empty()) {
+        logDebug("config namespace: %s", conf.namePrefix.c_str());
         mNamePrefix = conf.namePrefix;
     }
 }

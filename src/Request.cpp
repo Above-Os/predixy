@@ -112,6 +112,7 @@ void Request::clear()
 
 void Request::set(const RequestParser& p, Request* leader)
 {
+    logDebug("set request parser to req");
     mType = p.type();
     if (leader) {
         // split mode
@@ -171,34 +172,53 @@ void Request::set(const RequestParser& p, Request* leader)
     }
     mKey = p.key();
     mInline = p.isInline();
+}
 
+void Request::mutate()
+{
     // FIXME: only in cluster proxy mode
     // key mutate
     if ( !isInner() && 
         !mKeyPrefix.empty()
     ) {
+        logDebug("mutate req key");
         if (mHead.empty()){
             // cmd in mReq
             mHead = mReq;
-            int cutPos = mKey.begin().pos;
-            while (cutPos > 0 ){
-                char ch = mHead.begin().buf->data()[cutPos];
+            Segment headEnd = mReq;
+            BufferPos endPos = headEnd.cur();
+            int secondSymbol = 0;
+            while ( 1 ){
+                char ch = headEnd.cur().buf->data()[headEnd.cur().pos];
                 if (ch == '$') {
+                    secondSymbol++;
+                    if (secondSymbol == 2){
+                        break;
+                    }
+                }
+
+                headEnd.use(1);
+
+                endPos = headEnd.cur();
+                if (endPos.buf == headEnd.end().buf && endPos.pos == headEnd.end().pos){
                     break;
                 }
 
-                cutPos++;
             }
 
-            mHead.cut(mReq.begin().pos - cutPos);
+            mHead.end() = endPos;
         }
 
-        // move mReq begin pod to add prefix
-        mReq.begin().pos = mKey.begin().pos;
+        // skip key len 
+        // $<keylen>\r\n
+        mReq.seek(mKey.begin().buf, mKey.begin().pos, 0);
         mPreReq.clear();
 
         int keyLen = mKey.length() + mKeyPrefix.length() + 1;
-        mPreReq.fset(nullptr, "$%d\r\n", "%s:", keyLen, mKeyPrefix.data());
+        mPreReq.fset(nullptr, 
+                    "$%d\r\n"
+                    "%s:", 
+                    keyLen, mKeyPrefix.data());
 
     }
 }
@@ -335,6 +355,7 @@ bool Request::send(Socket* s)
 {
     const char* dat;
     int len;
+    logDebug("send req to socket");
     while (mHead.get(dat, len)) {
         int n = s->write(dat, len);
         if (n > 0) {
@@ -364,11 +385,17 @@ bool Request::send(Socket* s)
 
 int Request::fill(IOVec* vecs, int len)
 {
-    bool all = false;
+    logDebug("fill req to io buffer");
+    bool all = false, preAll = false;
     int n = mHead.fill(vecs, len, all);
     if (!all) {
         return n;
     }
+
+    if ( !mPreReq.empty()){
+        n += mPreReq.fill(vecs + n, len - n, preAll);
+    }
+
     n += mReq.fill(vecs + n, len - n, all);
     if (n > 0 && all) {
         vecs[n - 1].req = this;

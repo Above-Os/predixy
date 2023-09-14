@@ -180,6 +180,14 @@ public:
     {
         return mBegin;
     }
+    BufferPos& cur()
+    {
+        return mCur;
+    }
+    const BufferPos& cur() const
+    {
+        return mCur;
+    }
     BufferPos& end()
     {
         return mEnd;

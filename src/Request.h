@@ -69,6 +69,7 @@ public:
     bool send(Socket* s);
     int fill(IOVec* vecs, int len);
     bool isDone() const;
+    void mutate();
     AcceptConnection* connection() const
     {
         return mLeader ? mLeader->mConn : mConn;

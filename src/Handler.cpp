@@ -676,6 +676,7 @@ bool Handler::preHandleRequest(Request* req, const String& key)
         }
         break;
     default:
+        req->mutate();
         break;
     }
     return false;
@@ -1502,6 +1503,7 @@ bool Handler::permission(Request* req, const String& key, Response::GenericCode&
     }
 
     if (!a->namePrefix().empty()) {
+        logDebug("set namespace to req, %s", a->namePrefix().data());
         req->setKeyPrefix(a->namePrefix());
     }
     return true;
