@@ -1500,5 +1500,9 @@ bool Handler::permission(Request* req, const String& key, Response::GenericCode&
         code = Response::PermissionDeny;
         return false;
     }
+
+    if (!a->namePrefix().empty()) {
+        req->setKeyPrefix(a->namePrefix());
+    }
     return true;
 }

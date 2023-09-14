@@ -249,6 +249,8 @@ void Conf::setAuthority(const ConfParser::Node* node)
                 setKeyPrefix(c.readKeyPrefix, v);
             } else if (strcasecmp(k.c_str(), "WriteKeyPrefix") == 0) {
                 setKeyPrefix(c.writeKeyPrefix, v);
+            } else if (strcasecmp(k.c_str(), "Namespace") == 0) {
+                c.namePrefix == v;
             } else {
                 Throw(UnknownKey, "%s:%d unknown key %s", n->file, n->line, k.c_str());
             }

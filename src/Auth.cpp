@@ -38,6 +38,10 @@ Auth::Auth(const AuthConf& conf):
             mWriteKeyPrefix = kp;
         }
     }
+
+    if (!conf.namePrefix.empty()) {
+        mNamePrefix = conf.namePrefix;
+    }
 }
 
 Auth::~Auth()

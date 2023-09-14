@@ -114,6 +114,7 @@ void Request::set(const RequestParser& p, Request* leader)
 {
     mType = p.type();
     if (leader) {
+        // split mode
         const Request* r = nullptr;
         switch (mType) {
         case Command::Mget:
@@ -157,7 +158,7 @@ void Request::set(const RequestParser& p, Request* leader)
         mHead = r->mReq;
         mReq = p.request();
         if (leader == this) {
-            if (mType == Command::Mset || mType == Command::Msetnx) {
+            if (mType == Command::Mset || mType == Command::Msetnx) { // multi key-val
                 mFollowers = (p.argNum() - 1) >> 1;
             } else {
                 mFollowers = p.argNum() - 1;
@@ -170,6 +171,36 @@ void Request::set(const RequestParser& p, Request* leader)
     }
     mKey = p.key();
     mInline = p.isInline();
+
+    // FIXME: only in cluster proxy mode
+    // key mutate
+    if ( !isInner() && 
+        !mKeyPrefix.empty()
+    ) {
+        if (mHead.empty()){
+            // cmd in mReq
+            mHead = mReq;
+            int cutPos = mKey.begin().pos;
+            while (cutPos > 0 ){
+                char ch = mHead.begin().buf->data()[cutPos];
+                if (ch == '$') {
+                    break;
+                }
+
+                cutPos++;
+            }
+
+            mHead.cut(mReq.begin().pos - cutPos);
+        }
+
+        // move mReq begin pod to add prefix
+        mReq.begin().pos = mKey.begin().pos;
+        mPreReq.clear();
+
+        int keyLen = mKey.length() + mKeyPrefix.length() + 1;
+        mPreReq.fset(nullptr, "$%d\r\n", "%s:", keyLen, mKeyPrefix.data());
+
+    }
 }
 
 void Request::setAuth(const String& password)
@@ -308,6 +339,14 @@ bool Request::send(Socket* s)
         int n = s->write(dat, len);
         if (n > 0) {
             mHead.use(n);
+        } else {
+            return false;
+        }
+    }
+    while (mPreReq.get(dat, len)) {
+        int n = s->write(dat, len);
+        if (n > 0) {
+            mPreReq.use(n);
         } else {
             return false;
         }

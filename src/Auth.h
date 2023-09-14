@@ -22,6 +22,11 @@ public:
     {
         return mPassword;
     }
+
+    const String& namePrefix() const
+    {
+        return mNamePrefix;
+    }
     bool permission(Request* req, const String& key) const;
 private:
     String mPassword;
@@ -29,6 +34,8 @@ private:
     typedef std::set<String> KeyPrefixSet;
     KeyPrefixSet* mReadKeyPrefix;
     KeyPrefixSet* mWriteKeyPrefix;
+
+    String mNamePrefix;
 };
 
 class Authority

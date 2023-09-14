@@ -162,6 +162,14 @@ public:
     {
         return mCreateTime;
     }
+    const String& keyPrefix() const 
+    {
+        return mKeyPrefix;
+    }
+    void setKeyPrefix(const String& prefix) 
+    {
+        mKeyPrefix = prefix;
+    }
 private:
     AcceptConnection* mConn;
     Command::Type mType;
@@ -178,6 +186,8 @@ private:
     int mRedirectCnt;
     long mCreateTime; //steady time point us
     void* mData; //user data for response
+    String mKeyPrefix; // namespace
+    Segment mPreReq;
 };
 
 typedef List<Request, RequestListIndex::Recv> RecvRequestList;

@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "filesystem": "cpp",
+        "algorithm": "cpp",
+        "complex": "cpp",
+        "new": "cpp",
+        "chrono": "cpp",
+        "set": "cpp",
+        "string": "cpp",
+        "istream": "cpp"
+    }
+}
