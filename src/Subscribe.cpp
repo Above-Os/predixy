@@ -14,25 +14,32 @@ Subscribe::Subscribe():
 
 
 
-SubscribeParser::Status SubscribeParser::parse(const Segment& body, int& chs)
+SubscribeParser::Status SubscribeParser::parse(const Segment& body, int& chs, int& prefixLen)
 {
     SegmentStr<128> str(body);
     Status st = Unknown;
     chs = 0;
+    prefixLen = 0;
     if (str.hasPrefix("*3\r\n$7\r\nmessage\r\n")) {
+        prefixLen = strlen("*3\r\n$7\r\nmessage\r\n");
         st = Message;
     } else if (str.hasPrefix("*4\r\n$8\r\npmessage\r\n")) {
+        prefixLen = strlen("*4\r\n$8\r\npmessage\r\n");
         st = Pmessage;
     } else if (str.hasPrefix("*3\r\n$9\r\nsubscribe\r\n")) {
+        prefixLen = strlen("*3\r\n$9\r\nsubscribe\r\n");
         st = Subscribe;
         chs = -1;
     } else if (str.hasPrefix("*3\r\n$10\r\npsubscribe\r\n")) {
+        prefixLen = strlen("*3\r\n$10\r\npsubscribe\r\n");
         st = Psubscribe;
         chs = -1;
     } else if (str.hasPrefix("*3\r\n$11\r\nunsubscribe\r\n")) {
+        prefixLen = strlen("*3\r\n$11\r\nunsubscribe\r\n");
         st = Unsubscribe;
         chs = -1;
     } else if (str.hasPrefix("*3\r\n$12\r\npunsubscribe\r\n")) {
+        prefixLen = strlen("*3\r\n$12\r\npunsubscribe\r\n");
         st = Punsubscribe;
         chs = -1;
     } else if (str.hasPrefix("-")) {

@@ -76,8 +76,32 @@ void Response::set(const ResponseParser& p)
     mType = p.type();
     mInteger = p.integer();
     mRes = p.response();
+    mNamePrefix = p.namePrefix();
 }
 
+void Response::mutate(int subPrefixLen)
+{
+    if ( !mNamePrefix.empty() && mRes.length() > subPrefixLen ){
+        mHead = mRes;
+        Segment headEnd = mRes;
+        headEnd.use(subPrefixLen); // move to key        
+        mHead.end() = headEnd.cur();
+
+        mRes.use(subPrefixLen+1);  // skip head and symbol $
+        int oldKeyLen = 0;
+        char ch = '0';
+        while ( ch != '\r' ){
+            oldKeyLen = (oldKeyLen*10) + ch - '0';
+            ch = mRes.cur().buf->data()[mRes.cur().pos];
+            mRes.use(1);
+        }
+
+        mRes.use(1 + mNamePrefix.length() + 1); // skip \n + key prefix + ':'
+
+        mPreRes.fset(nullptr, "$%d\r\n", oldKeyLen - mNamePrefix.length() - 1);
+
+    }
+}
 
 void Response::set(int64_t num)
 {
@@ -154,6 +178,14 @@ bool Response::send(Socket* s)
             return false;
         }
     }
+    while (mPreRes.get(dat, len)) {
+        int n = s->write(dat, len);
+        if (n > 0) {
+            mPreRes.use(n);
+        } else {
+            return false;
+        }
+    }
     while (mRes.get(dat, len)) {
         int n = s->write(dat, len);
         if (n > 0) {
@@ -172,6 +204,14 @@ int Response::fill(IOVec* vecs, int len, Request* req) const
     if (!all) {
         return n;
     }
+
+    if ( !mPreRes.empty()){
+        n += mPreRes.fill(vecs + n, len - n, all);
+        if (!all) {
+            return n;
+        }
+    }
+
     n += mRes.fill(vecs + n, len - n, all);
     if (n > 0 && all) {
         vecs[n - 1].req = req;

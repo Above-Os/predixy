@@ -70,6 +70,14 @@ public:
     {
         return mInteger;
     }
+    const String& namePrefix() const 
+    {
+        return mNamePrefix;
+    }
+    void setNamePrefix(const String& np)
+    {
+        mNamePrefix = np;
+    }
 private:
     Reply::Type mType;
     Segment mRes;
@@ -81,6 +89,7 @@ private:
     int mElementCnt[MaxArrayDepth];
     int mDepth;
     bool mSign;
+    String mNamePrefix;
 };
 
 #endif

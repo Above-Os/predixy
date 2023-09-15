@@ -162,10 +162,18 @@ void ConnectConnection::parse(Handler* h, Buffer* buf, int pos)
 void ConnectConnection::handleResponse(Handler* h)
 {
     FuncCallTimer();
+
+    int prefixLen = 0;
     if (mAcceptConnection) {
+        const Auth* a = mAcceptConnection->auth();
+        if ( a && !a->namePrefix().empty()) {
+            mParser.setNamePrefix(a->namePrefix());
+            logDebug("set res name prefix, %s", a->namePrefix().data());
+        }
+
         if (mAcceptConnection->inSub(true)) {
             int chs;
-            switch (SubscribeParser::parse(mParser.response(), chs)) {
+            switch (SubscribeParser::parse(mParser.response(), chs, prefixLen)) {
             case SubscribeParser::Subscribe:
             case SubscribeParser::Psubscribe:
                 mAcceptConnection->decrPendSub();
@@ -207,6 +215,10 @@ void ConnectConnection::handleResponse(Handler* h)
     if (Request* req = mSentRequests.front()) {
         ResponsePtr res = ResponseAlloc::create();
         res->set(mParser);
+
+        if (prefixLen) {
+            res->mutate(prefixLen);
+        }
         mParser.reset();
         logDebug("h %d s %s %d create res %ld match req %ld",
                 h->id(), peer(), fd(), res->id(), req->id());

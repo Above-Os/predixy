@@ -387,14 +387,17 @@ bool Request::send(Socket* s)
 
 int Request::fill(IOVec* vecs, int len)
 {
-    bool all = false, preAll = false;
+    bool all = false;
     int n = mHead.fill(vecs, len, all);
     if (!all) {
         return n;
     }
 
     if ( !mPreReq.empty()){
-        n += mPreReq.fill(vecs + n, len - n, preAll);
+        n += mPreReq.fill(vecs + n, len - n, all);
+        if (!all) {
+            return n;
+        }
     }
 
     n += mReq.fill(vecs + n, len - n, all);
