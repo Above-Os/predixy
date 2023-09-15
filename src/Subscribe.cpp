@@ -14,7 +14,7 @@ Subscribe::Subscribe():
 
 
 
-SubscribeParser::Status SubscribeParser::parse(const Segment& body, int& chs, int& prefixLen)
+SubscribeParser::Status SubscribeParser::parse(const Segment& body, int& chs, int& prefixLen, bool& pattern)
 {
     SegmentStr<128> str(body);
     Status st = Unknown;
@@ -25,6 +25,7 @@ SubscribeParser::Status SubscribeParser::parse(const Segment& body, int& chs, in
         st = Message;
     } else if (str.hasPrefix("*4\r\n$8\r\npmessage\r\n")) {
         prefixLen = strlen("*4\r\n$8\r\npmessage\r\n");
+        pattern = true;
         st = Pmessage;
     } else if (str.hasPrefix("*3\r\n$9\r\nsubscribe\r\n")) {
         prefixLen = strlen("*3\r\n$9\r\nsubscribe\r\n");

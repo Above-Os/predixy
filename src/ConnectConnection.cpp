@@ -164,6 +164,7 @@ void ConnectConnection::handleResponse(Handler* h)
     FuncCallTimer();
 
     int prefixLen = 0;
+    bool pattern = false;
     if (mAcceptConnection) {
         const Auth* a = mAcceptConnection->auth();
         if ( a && !a->namePrefix().empty()) {
@@ -173,7 +174,7 @@ void ConnectConnection::handleResponse(Handler* h)
 
         if (mAcceptConnection->inSub(true)) {
             int chs;
-            switch (SubscribeParser::parse(mParser.response(), chs, prefixLen)) {
+            switch (SubscribeParser::parse(mParser.response(), chs, prefixLen, pattern)) {
             case SubscribeParser::Subscribe:
             case SubscribeParser::Psubscribe:
                 mAcceptConnection->decrPendSub();
@@ -217,7 +218,7 @@ void ConnectConnection::handleResponse(Handler* h)
         res->set(mParser);
 
         if (prefixLen) {
-            res->mutate(prefixLen);
+            res->mutate(prefixLen, pattern);
         }
         mParser.reset();
         logDebug("h %d s %s %d create res %ld match req %ld",

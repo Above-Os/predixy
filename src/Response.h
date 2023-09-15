@@ -55,7 +55,7 @@ public:
     void adjustForLeader(Request* req);
     bool send(Socket* s);
     int fill(IOVec* vecs, int len, Request* req) const;
-    void mutate(int subPrefixLen);
+    void mutate(int subPrefixLen, bool pattern);
     void setType(Reply::Type t)
     {
         mType = t;
@@ -138,6 +138,8 @@ private:
     Segment mRes;
     String mNamePrefix;
     Segment mPreRes;
+    Segment mKeyPattern;
+    Segment mKeyLen;
 };
 
 typedef List<Response> ResponseList;

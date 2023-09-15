@@ -56,7 +56,7 @@ public:
         String
     };
 public:
-    static Status parse(const Segment& body, int& chs, int& prefixLen);
+    static Status parse(const Segment& body, int& chs, int& prefixLen, bool& pattern);
 };
 
 

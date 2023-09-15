@@ -79,7 +79,7 @@ void Response::set(const ResponseParser& p)
     mNamePrefix = p.namePrefix();
 }
 
-void Response::mutate(int subPrefixLen)
+void Response::mutate(int subPrefixLen, bool pattern)
 {
     if ( !mNamePrefix.empty() && mRes.length() > subPrefixLen ){
         mHead = mRes;
@@ -97,8 +97,29 @@ void Response::mutate(int subPrefixLen)
         }
 
         mRes.use(1 + mNamePrefix.length() + 1); // skip \n + key prefix + ':'
+        int newKeyLen = oldKeyLen - mNamePrefix.length() - 1;
+        mPreRes.fset(nullptr, "$%d\r\n", newKeyLen);
 
-        mPreRes.fset(nullptr, "$%d\r\n", oldKeyLen - mNamePrefix.length() - 1);
+        if (pattern){
+            mKeyPattern = mRes;
+            Segment keyPatternEnd = mRes;
+            keyPatternEnd.use(newKeyLen + 2);
+            mKeyPattern.end() = keyPatternEnd.cur();
+
+            mRes.use(newKeyLen + 3); // skip ket pattern + "$"
+
+            int keylen = 0;
+            ch = '0';
+            while ( ch != '\r' ){
+                keylen = (keylen*10) + ch - '0';
+                ch = mRes.cur().buf->data()[mRes.cur().pos];
+                mRes.use(1);
+            }
+
+            mRes.use(1 + mNamePrefix.length() + 1); // skip \n + key prefix + ':'
+            mKeyLen.fset(nullptr, "$%d\r\n", keylen - mNamePrefix.length() - 1);
+        }
+
 
     }
 }
@@ -186,6 +207,22 @@ bool Response::send(Socket* s)
             return false;
         }
     }
+    while (mKeyPattern.get(dat, len)) {
+        int n = s->write(dat, len);
+        if (n > 0) {
+            mKeyPattern.use(n);
+        } else {
+            return false;
+        }
+    }
+    while (mKeyLen.get(dat, len)) {
+        int n = s->write(dat, len);
+        if (n > 0) {
+            mKeyLen.use(n);
+        } else {
+            return false;
+        }
+    }
     while (mRes.get(dat, len)) {
         int n = s->write(dat, len);
         if (n > 0) {
@@ -205,8 +242,20 @@ int Response::fill(IOVec* vecs, int len, Request* req) const
         return n;
     }
 
-    if ( !mPreRes.empty()){
+    if ( !mPreRes.empty() ){
         n += mPreRes.fill(vecs + n, len - n, all);
+        if (!all) {
+            return n;
+        }
+    }
+
+    if ( !mKeyPattern.empty() ){
+        n += mKeyPattern.fill(vecs + n, len - n, all);
+        if (!all) {
+            return n;
+        }
+        
+        n += mKeyLen.fill(vecs + n, len - n, all);
         if (!all) {
             return n;
         }
