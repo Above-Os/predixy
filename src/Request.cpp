@@ -179,7 +179,8 @@ void Request::mutate()
     // FIXME: only in cluster proxy mode
     // key mutate
     if ( !isInner() && 
-        !mKeyPrefix.empty()
+        !mKeyPrefix.empty() && 
+        !(Command::get(mType).mode & Command::NoKey)
     ) {
         logDebug("mutate req key");
         if (mHead.empty()){
@@ -208,6 +209,7 @@ void Request::mutate()
 
             mHead.end() = endPos;
         }
+        logDebug("mutated req head, %s", SegmentStr<128>(mHead).data());
 
         // skip key len 
         // $<keylen>\r\n
@@ -385,7 +387,6 @@ bool Request::send(Socket* s)
 
 int Request::fill(IOVec* vecs, int len)
 {
-    logDebug("fill req to io buffer");
     bool all = false, preAll = false;
     int n = mHead.fill(vecs, len, all);
     if (!all) {
