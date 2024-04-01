@@ -150,6 +150,10 @@ void Request::set(const RequestParser& p, Request* leader)
             break;
         case Command::Unsubscribe:
             r = GenericRequests[UnsubscribeHead];
+            if (p.argNum() == 0){
+                logDebug("unsupported Unsubscribe command");
+                r = nullptr;
+            }            
             break;
         default:
             //should never reach
