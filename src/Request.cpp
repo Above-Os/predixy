@@ -150,10 +150,6 @@ void Request::set(const RequestParser& p, Request* leader)
             break;
         case Command::Unsubscribe:
             r = GenericRequests[UnsubscribeHead];
-            if (p.argNum() == 1){
-                logDebug("unsupported Unsubscribe command");
-                r = nullptr;
-            }            
             break;
         default:
             //should never reach
@@ -184,6 +180,7 @@ void Request::mutate()
     // key mutate
     if ( !isInner() && 
         !mKeyPrefix.empty() && 
+        !mKey.empty() &&
         !(Command::get(mType).mode & Command::NoKey)
     ) {
         logDebug("mutate req key");
