@@ -23,6 +23,6 @@ jobs:
               uses: docker/build-push-action@v3
               with:
                   push: true
-                  tags: eball/predixy-alpine:${{ github.event.inputs.tags }}
+                  tags: beclab/predixy-alpine:${{ github.event.inputs.tags }}
                   file: Dockerfile
 
